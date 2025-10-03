@@ -1,10 +1,5 @@
 # Node VLC Client
 
-![npm](https://img.shields.io/npm/v/vlc-client?style=for-the-badge)
-![NPM](https://img.shields.io/npm/l/vlc-client?color=crimson&style=for-the-badge)
-![npm bundle size](https://img.shields.io/bundlephobia/min/vlc-client?color=green&label=size&style=for-the-badge)
-![Travis (.org)](https://img.shields.io/travis/alexandrucancescu/node-vlc-client?logo=travis-ci&logoColor=ffd700&style=for-the-badge)
-
 An intuitive library to control VLC with simple function calls 
 using VLC's own HTTP interface, written in typescript. Covers almost all
 of VLC's functions that can be controlled with the HTTP interface
@@ -20,14 +15,16 @@ of VLC's functions that can be controlled with the HTTP interface
 - [x] Request album art
 - [x] Lots of helper methods
 - [x] Browse for files
-- [ ] Auto polling for changes
-- [ ] Audio eq, effects
-- [ ] VLC instances discovery on the network
+- [ ] Events
+    - [X] Get notified on video change
+    - [X] Get notified when no new video is being played
+    - [X] Get notified when when there are 4 seconds left in the video.
+    - [ ] ...
 
 ## Installation
 
 ```shell script
-npm install --save vlc-client
+npm install --save vlc-client@git+https://github.com/CriosChan/node-vlc-client
 ```
 
 ## Usage
@@ -411,6 +408,43 @@ export interface VlcFile {
 }
 ```
 
+## Events
+### Exemple 
+```typescript
+const client = new Client(/* SETTINGS */);
+
+client.on('EVENT_NAME', (values) => {
+    /* YOUR CODE HERE */;
+});
+
+client.startStatusUpdates();
+```
+
+### Methods
+`startStatusUpdates` start event listening.  
+`stopStatusUpdates` stop event listening.
+
+### Events
+- `newVideoPlayed`
+    - Get informed when a new video is played
+    - Returns :
+        - ```json
+        {
+            lastTitle: string | null,
+            newTitle: string
+        }
+        ```
+- `noMoreVideoPlayed`
+    - VLC has no more videos to play
+    - Returns :
+        - ```json
+        {
+            lastTitle: string, # Last video filename
+        }
+        ```
+- `fourSecondsRemaining`
+    - You are notified that there are only 4 seconds left in the video currently playing.
+    - Returns : `[Actual video filename]`
 
 ## License
 
