@@ -1,7 +1,7 @@
 {
   "name": "vlc-client",
   "description": "Node HTTP client/remote implementation to control VLC with simple function calls using VLC's own HTTP interface",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "private": false,
   "module": "NodeNext",
   "main": "dist/index.js",
@@ -9,12 +9,12 @@
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register --timeout 20000 'test/**/*.test.ts'",
     "clean-trash": "rm dist/Core.* dist/Playlist.* dist/Spawner.* ; rm -rf dist/src dist/test"
   },
-  "author": "Alexandru Cancescu",
+  "author": "Alexandru Cancescu, CriosChan",
   "license": "MIT",
-  "homepage": "https://github.com/alexandrucancescu/node-vlc-client",
+  "homepage": "https://github.com/crioschan/node-vlc-client",
   "repository": {
     "type": "git",
-    "url": "https://github.com/alexandrucancescu/node-vlc-client"
+    "url": "https://github.com/crioschan/node-vlc-client"
   },
   "types": "dist/index.d.ts",
   "typings": "dist/index.d.ts",
