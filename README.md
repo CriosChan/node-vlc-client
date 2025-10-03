@@ -428,7 +428,7 @@ client.startStatusUpdates();
 - `newVideoPlayed`
     - Get informed when a new video is played
     - Returns :
-        - ```json
+        ```json
         {
             lastTitle: string | null,
             newTitle: string
@@ -437,7 +437,7 @@ client.startStatusUpdates();
 - `noMoreVideoPlayed`
     - VLC has no more videos to play
     - Returns :
-        - ```json
+        ```json
         {
             lastTitle: string, # Last video filename
         }
