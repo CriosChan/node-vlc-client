@@ -592,12 +592,6 @@ export default class Client extends EventEmitter{
 			this.lastTitle = null
 		}
 
-		if (status.hasOwnProperty("time") && status.hasOwnProperty("length")){
-			if (status.time == status.length - 4) {
-				this.emit("fourSecondsRemaining")
-			}
-		}
-
 		if (status.hasOwnProperty("information")) {
 			const title = status.information.category.meta.filename
 			if (title != this.lastTitle){
@@ -606,6 +600,12 @@ export default class Client extends EventEmitter{
 					newTitle: title
 				})
 				this.lastTitle = title
+			}
+
+			if (status.hasOwnProperty("time") && status.hasOwnProperty("length")){
+				if (status.time == status.length - 4) {
+					this.emit("fourSecondsRemaining", title)
+				}
 			}
 		}
 	}
