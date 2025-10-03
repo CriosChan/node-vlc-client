@@ -3,6 +3,7 @@
   "description": "Node HTTP client/remote implementation to control VLC with simple function calls using VLC's own HTTP interface",
   "version": "1.1.1",
   "private": false,
+  "module": "NodeNext",
   "main": "dist/index.js",
   "scripts": {
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register --timeout 20000 'test/**/*.test.ts'",

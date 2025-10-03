@@ -1,6 +1,10 @@
+/// <reference types="node" />
 import { AlbumArtResult, AspectRatio, AudioTrack, ClientOptions, PlayFileOptions, PlaylistEntry, SubtitleTrack, Tracks, VideoTrack, VlcFile, VlcMeta, VlcStatus } from "./Types";
-export default class Client {
+import { EventEmitter } from "events";
+export default class Client extends EventEmitter {
     private readonly options;
+    private interval;
+    private lastTitle;
     constructor(options: ClientOptions);
     play(): Promise<void>;
     pause(): Promise<void>;
@@ -156,4 +160,7 @@ export default class Client {
     private error;
     private static parsePlaylistEntries;
     private static validateOptions;
+    statusHandler(): Promise<void>;
+    startStatusUpdates(intervalTime?: number): void;
+    stopStatusUpdates(): void;
 }

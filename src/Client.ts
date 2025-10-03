@@ -14,12 +14,16 @@ import {stringify as encodeQuery, unescape} from "querystring"
 import {basename} from "path"
 import VlcClientError from "./VlcClientError";
 import {normalize} from "path";
+import { EventEmitter } from "events";
 
 
-export default class Client{
+export default class Client extends EventEmitter{
 	private readonly options: ClientOptions;
+	private interval: NodeJS.Timeout | null = null;
+	private lastTitle: string | null = null;
 
 	public constructor(options: ClientOptions) {
+		super();
 		this.options = Client.validateOptions(options);
 	}
 
@@ -313,9 +317,9 @@ export default class Client{
 					let track = stats.information.category[key] as Track;
 					track.streamIndex = streamIndex;
 					switch (track.Type) {
-						case "Audio": tracks.audio.push(<AudioTrack>track);break;
-						case "Video": tracks.video.push(<VideoTrack>track);break;
-						case "Subtitle": tracks.subtitle.push(<SubtitleTrack>track);break;
+						case "Audio": tracks.audio.push(track as AudioTrack);break;
+						case "Video": tracks.video.push(track as VideoTrack);break;
+						case "Subtitle": tracks.subtitle.push(track as SubtitleTrack);break;
 					}
 				}
 			}
@@ -466,7 +470,7 @@ export default class Client{
 	private async requestBrowse(dir: string): Promise<VlcFile[]> {
 		const response = await this.request("/requests/browse.json", {dir});
 
-		const browseResult = <BrowseResponse> JSON.parse(response.body.toString());
+		const browseResult = JSON.parse(response.body.toString()) as BrowseResponse;
 
 		if(Array.isArray(browseResult?.element)){
 			let files = browseResult.element.filter(e=> e.name && e.name !== "..");
@@ -572,6 +576,53 @@ export default class Client{
 		options.log = (options.log ===true);
 
 		return options;
+	}
+
+	//endregion
+
+	// region EVENTS
+
+	public async statusHandler() {
+		const status = await this.status()
+
+		if (this.lastTitle != null && !status.hasOwnProperty("information")){
+			this.emit("noMoreVideoPlayed", {
+				lastTitle: this.lastTitle
+			})
+			this.lastTitle = null
+		}
+
+		if (status.hasOwnProperty("time") && status.hasOwnProperty("length")){
+			if (status.time == status.length - 4) {
+				this.emit("fourSecondsRemaining")
+			}
+		}
+
+		if (status.hasOwnProperty("information")) {
+			const title = status.information.category.meta.filename
+			if (title != this.lastTitle){
+				this.emit("newVideoPlayed", {
+					lastTitle: this.lastTitle,
+					newTitle: title
+				})
+				this.lastTitle = title
+			}
+		}
+	}
+
+	public startStatusUpdates(intervalTime: number = 1000) {
+		if (this.interval) return; // Évite de démarrer plusieurs fois
+
+        this.interval = setInterval(async () => {
+            await this.statusHandler();
+        }, intervalTime);
+	}
+
+	public stopStatusUpdates() {
+		if(this.interval) {
+			clearInterval(this.interval);
+			this.interval = null;
+		}
 	}
 
 	//endregion

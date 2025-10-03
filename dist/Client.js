@@ -15,8 +15,12 @@ const querystring_1 = require("querystring");
 const path_1 = require("path");
 const VlcClientError_1 = require("./VlcClientError");
 const path_2 = require("path");
-class Client {
+const events_1 = require("events");
+class Client extends events_1.EventEmitter {
     constructor(options) {
+        super();
+        this.interval = null;
+        this.lastTitle = null;
         this.options = Client.validateOptions(options);
     }
     //region ACTIONS
@@ -108,7 +112,7 @@ class Client {
             if (options === null || options === void 0 ? void 0 : options.wait) {
                 const startTime = Date.now();
                 const timeout = (_a = options === null || options === void 0 ? void 0 : options.timeout) !== null && _a !== void 0 ? _a : 3000;
-                const fileName = (0, path_1.basename)(uri);
+                const fileName = path_1.basename(uri);
                 return new Promise(res => {
                     let interval = setInterval(() => __awaiter(this, void 0, void 0, function* () {
                         if (Date.now() - startTime > timeout) {
@@ -530,7 +534,7 @@ class Client {
             const browseResult = JSON.parse(response.body.toString());
             if (Array.isArray(browseResult === null || browseResult === void 0 ? void 0 : browseResult.element)) {
                 let files = browseResult.element.filter(e => e.name && e.name !== "..");
-                files.forEach(e => e.path = (0, path_2.normalize)(e.path));
+                files.forEach(e => e.path = path_2.normalize(e.path));
                 return files;
             }
             else {
@@ -562,7 +566,7 @@ class Client {
             let url = `http://${this.options.ip}:${this.options.port}${urlPath}`;
             if (query) {
                 headers["Content-Type"] = "application/x-www-form-urlencoded";
-                url += `?${(0, querystring_1.stringify)(query)}`;
+                url += `?${querystring_1.stringify(query)}`;
             }
             // this.log(url);
             const response = yield phin({
@@ -601,7 +605,7 @@ class Client {
             name: pe.name,
             duration: pe.duration,
             isCurrent: (pe.current === "current"),
-            uri: (0, querystring_1.unescape)(pe.uri),
+            uri: querystring_1.unescape(pe.uri),
         }));
     }
     static validateOptions(options) {
@@ -622,6 +626,47 @@ class Client {
         }
         options.log = (options.log === true);
         return options;
+    }
+    //endregion
+    // region EVENTS
+    statusHandler() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const status = yield this.status();
+            if (this.lastTitle != null && !status.hasOwnProperty("information")) {
+                this.emit("noMoreVideoPlayed", {
+                    lastTitle: this.lastTitle
+                });
+                this.lastTitle = null;
+            }
+            if (status.hasOwnProperty("time") && status.hasOwnProperty("length")) {
+                if (status.time == status.length - 4) {
+                    this.emit("fourSecondsRemaining");
+                }
+            }
+            if (status.hasOwnProperty("information")) {
+                const title = status.information.category.meta.filename;
+                if (title != this.lastTitle) {
+                    this.emit("newVideoPlayed", {
+                        lastTitle: this.lastTitle,
+                        newTitle: title
+                    });
+                    this.lastTitle = title;
+                }
+            }
+        });
+    }
+    startStatusUpdates(intervalTime = 1000) {
+        if (this.interval)
+            return; // Évite de démarrer plusieurs fois
+        this.interval = setInterval(() => __awaiter(this, void 0, void 0, function* () {
+            yield this.statusHandler();
+        }), intervalTime);
+    }
+    stopStatusUpdates() {
+        if (this.interval) {
+            clearInterval(this.interval);
+            this.interval = null;
+        }
     }
 }
 exports.default = Client;
